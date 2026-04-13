@@ -1,0 +1,449 @@
+@{
+    ViewBag.Title = "Lịch sử đơn hàng";
+    ViewBag.Active = "History";
+    Layout = "~/Views/Shared/_LayoutShipper.cshtml";
+
+    DateTime monday = ViewBag.Monday != null ? (DateTime)ViewBag.Monday : DateTime.Now;
+    var ordersByDate = ViewBag.OrdersByDate as Dictionary<DateTime, object> ?? new Dictionary<DateTime, object>();
+
+    string[] dayNames = { "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật" };
+
+    // Helper function để lấy số đơn và tổng tiền
+    Func<DateTime, int> getOrderCount = (date) =>
+    {
+        if (ordersByDate.ContainsKey(date))
+        {
+            dynamic data = ordersByDate[date];
+            return data?.Count ?? 0;
+        }
+        return 0;
+    };
+
+    Func<DateTime, decimal> getOrderTotal = (date) =>
+    {
+        if (ordersByDate.ContainsKey(date))
+        {
+            dynamic data = ordersByDate[date];
+            return data?.Total ?? 0;
+        }
+        return 0;
+    };
+}
+
+<style>
+    .calendar-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .calendar-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .week-nav {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .week-nav-btn {
+        background: #0d6efd;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 15px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 500;
+    }
+
+        .week-nav-btn:hover {
+            background: #0b5ed7;
+            transform: translateY(-2px);
+        }
+
+    .calendar-week {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 12px;
+    }
+
+    .calendar-day {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 15px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+        .calendar-day:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .calendar-day.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .calendar-day.today {
+            border-color: #28a745;
+            border-width: 3px;
+        }
+
+    .day-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        opacity: 0.8;
+    }
+
+    .day-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .day-stats {
+        font-size: 0.75rem;
+        margin-top: auto;
+    }
+
+    .day-orders-count {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 3px 8px;
+        border-radius: 10px;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+
+    .day-total {
+        font-weight: 600;
+    }
+
+    .calendar-day.active .day-orders-count {
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    .orders-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+    }
+
+    .orders-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .orders-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .orders-date {
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+
+    .order-item {
+        background: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+    }
+
+        .order-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .order-code {
+        font-weight: 600;
+        color: #0d6efd;
+        font-size: 1.1rem;
+    }
+
+    .order-amount {
+        font-weight: 700;
+        color: #28a745;
+        font-size: 1.1rem;
+    }
+
+    .order-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .order-time {
+        color: #495057;
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+
+    .no-orders {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .no-orders-icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+
+    .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #0d6efd;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+    }
+
+    @@keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <div class="calendar-title">
+                <i class="bi bi-calendar-week"></i> Lịch sử đơn hàng
+            </div>
+            <div class="week-nav">
+                <button class="week-nav-btn" onclick="changeWeek(-1)">
+                    <i class="bi bi-chevron-left"></i> Tuần trước
+                </button>
+                <button class="week-nav-btn" onclick="changeWeek(0)">
+                    <i class="bi bi-calendar3"></i> Tuần này
+                </button>
+                <button class="week-nav-btn" onclick="changeWeek(1)">
+                    Tuần sau <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="calendar-week" id="calendarWeek">
+            @for (int i = 0; i < 7; i++)
+            {
+                DateTime currentDay = monday.AddDays(i);
+                bool isToday = currentDay.Date == DateTime.Now.Date;
+                string dayClass = isToday ? "today" : "";
+
+                <div class="calendar-day @dayClass" data-date="@currentDay.ToString("yyyy-MM-dd")" onclick="selectDate('@currentDay.ToString("yyyy-MM-dd")')">
+                    <div class="day-name">@dayNames[i]</div>
+                    <div class="day-number">@currentDay.ToString("dd/MM")</div>
+                    <div class="day-stats">
+                        @{
+                            int orderCount = getOrderCount(currentDay.Date);
+                            decimal orderTotal = getOrderTotal(currentDay.Date);
+                        }
+                        @if (orderCount > 0)
+                        {
+                            <div class="day-orders-count">
+                                <i class="bi bi-box"></i> @orderCount đơn
+                            </div>
+                            <div class="day-total">
+                                @String.Format("{0:N0}", orderTotal) đ
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="opacity: 0.5; font-size: 0.7rem;">Không có đơn</div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="orders-container">
+        <div class="orders-header">
+            <div>
+                <div class="orders-title">
+                    <i class="bi bi-list-check"></i> Danh sách đơn hàng
+                </div>
+                <div class="orders-date" id="selectedDateText">Chọn ngày để xem chi tiết</div>
+            </div>
+        </div>
+
+        <div id="ordersList">
+            <div class="no-orders">
+                <div class="no-orders-icon">📅</div>
+                <div>Vui lòng chọn một ngày để xem đơn hàng</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentMonday = '@monday.ToString("yyyy-MM-dd")';
+    let selectedDate = null;
+
+    // Chọn ngày
+    function selectDate(date) {
+        selectedDate = date;
+
+        // Cập nhật UI
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.classList.remove('active');
+        });
+        document.querySelector(`[data-date="${date}"]`).classList.add('active');
+
+        // Cập nhật text ngày được chọn
+        const dateObj = new Date(date);
+        const dayNames = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+        const dayName = dayNames[dateObj.getDay()];
+        const dateText = `${dayName}, ${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()}`;
+        document.getElementById('selectedDateText').textContent = dateText;
+
+        // Load đơn hàng
+        loadOrders(date);
+    }
+
+    // Load đơn hàng theo ngày
+    function loadOrders(date) {
+        const ordersList = document.getElementById('ordersList');
+        ordersList.innerHTML = '<div class="loading"><div class="spinner"></div>Đang tải...</div>';
+
+        $.ajax({
+            url: '@Url.Action("GetOrdersByDate", "Shipper")',
+            type: 'GET',
+            data: { date: date },
+            success: function(res) {
+                if (res.success && res.orders && res.orders.length > 0) {
+                    let html = '';
+                    res.orders.forEach(function(order) {
+                        html += `
+                            <div class="order-item">
+                                <div class="order-header">
+                                    <div class="order-code">#${order.MaDon}</div>
+                                    <div class="order-amount">${formatMoney(order.TongTien)} đ</div>
+                                </div>
+                                <div class="order-details">
+                                    <div><i class="bi bi-shop"></i> ${order.TenNhaHang || 'N/A'}</div>
+                                    <div><i class="bi bi-person"></i> ${order.TenKhachHang || 'N/A'}</div>
+                                </div>
+                                <div class="order-time">
+                                    <i class="bi bi-clock"></i> ${order.ThoiGianDat}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    ordersList.innerHTML = html;
+                } else {
+                    ordersList.innerHTML = `
+                        <div class="no-orders">
+                            <div class="no-orders-icon">📦</div>
+                            <div>Không có đơn hàng nào trong ngày này</div>
+                        </div>
+                    `;
+                }
+            },
+            error: function() {
+                ordersList.innerHTML = `
+                    <div class="no-orders">
+                        <div class="no-orders-icon">⚠️</div>
+                        <div>Có lỗi xảy ra khi tải dữ liệu</div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // Định dạng tiền
+    function formatMoney(amount) {
+        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    // Chuyển tuần
+    function changeWeek(weeks) {
+        if (weeks === 0) {
+            // Về tuần hiện tại
+            window.location.href = '@Url.Action("History", "Shipper")';
+        } else {
+            // Chuyển tuần trước/sau
+            const currentDate = new Date('@monday.ToString("yyyy-MM-dd")');
+            currentDate.setDate(currentDate.getDate() + (weeks * 7));
+            window.location.href = '@Url.Action("History", "Shipper")?week=' +
+                currentDate.toISOString().split('T')[0];
+        }
+    }
+
+    // Auto refresh mỗi 30 giây để cập nhật thời gian thực
+    setInterval(function() {
+        if (selectedDate) {
+            loadOrders(selectedDate);
+        }
+    }, 30000);
+
+    // Tự động chọn ngày hôm nay nếu có đơn
+    $(document).ready(function() {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const todayElement = document.querySelector(`[data-date="${todayStr}"]`);
+        if (todayElement) {
+            // Kiểm tra xem ngày hôm nay có đơn không
+            const dayStats = todayElement.querySelector('.day-stats');
+            if (dayStats && !dayStats.textContent.includes('Không có đơn')) {
+                selectDate(todayStr);
+            }
+        }
+    });
+</script>

@@ -1,0 +1,106 @@
+﻿@model ĐACN.Models.DonHangTongHopViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Đơn hàng của tôi";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-center text-primary fw-bold">Đơn hàng của tôi</h2>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="orderTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="processing-tab" data-bs-toggle="tab" data-bs-target="#processing" type="button">Đang xử lý</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button">Lịch sử đơn hàng</button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-3">
+        <!-- Đơn đang xử lý -->
+        <div class="tab-pane fade show active" id="processing">
+            @if (Model.DonHangDangXuLy == null || !Model.DonHangDangXuLy.Any())
+            {
+                <div class="alert alert-info text-center mt-3">Không có đơn hàng nào đang được xử lý.</div>
+            }
+            else
+            {
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Thời gian đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.DonHangDangXuLy)
+                        {
+                            <tr>
+                                <td>@item.MaDon</td>
+                                <td>@(item.ThoiGianDat?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                <td>@String.Format("{0:N0}₫", item.TongTien)</td>
+                                <td><span class="badge bg-warning text-dark">@item.TrangThai</span></td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-info" href="@Url.Action("TheoDoiDonHang", "KhachHang", new { maDon = item.MaDon })">
+                                        Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <!-- Lịch sử -->
+        <div class="tab-pane fade" id="history">
+            @if (Model.LichSuDonHang == null || !Model.LichSuDonHang.Any())
+            {
+                <div class="alert alert-info text-center mt-3">Bạn chưa có đơn hàng nào trong lịch sử.</div>
+            }
+            else
+            {
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="table-success">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Thời gian đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.LichSuDonHang)
+                        {
+                            <tr>
+                                <td>@item.MaDon</td>
+                                <td>@(item.ThoiGianDat?.ToString("dd/MM/yyyy HH:mm") ?? "-")</td>
+                                <td>@String.Format("{0:N0}₫", item.TongTien)</td>
+                                <td>
+                                    @if (item.TrangThai == "Hoàn tất")
+                                    {
+                                        <span class="badge bg-success">@item.TrangThai</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@item.TrangThai</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-info" href="@Url.Action("TheoDoiDonHang", "KhachHang", new { maDon = item.MaDon })">
+                                        Xem
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

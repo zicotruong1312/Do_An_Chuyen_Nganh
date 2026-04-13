@@ -1,0 +1,108 @@
+﻿@model IEnumerable<ĐACN.Shipper>
+@{
+    ViewBag.Title = "Cấp phép người giao hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <h3 class="mb-4 text-primary fw-bold">Danh sách người giao hàng chờ xác nhận</h3>
+
+    <!-- Thông báo -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Tìm kiếm -->
+    <div class="mb-3 text-end">
+        <form method="get" class="d-inline-flex align-items-center">
+            <input type="text" name="keyword" value="@ViewBag.Keyword" placeholder="Tìm kiếm..."
+                   class="form-control me-2" style="width:250px;" />
+            <button type="submit" class="btn btn-primary">Tìm</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover text-center align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên Shipper</th>
+                    <th>SĐT</th>
+                    <th>Tài khoản</th>
+                    <th>Trạng thái</th>
+                    <th>Xem</th>
+                    <th>Chấp nhận</th>
+                    <th>Từ chối</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-muted">Không có người giao hàng nào chờ xác nhận</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var s in Model)
+                    {
+                        <tr>
+                            <td>@s.MaShipper</td>
+                            <td>@s.TenShipper</td>
+                            <td>@s.SDT</td>
+                            <td>@s.TaiKhoan?.TenDangNhap</td>
+                            <td>
+                                @if (s.TaiKhoan?.TrangThai == true)
+                                {
+                                    <span class="text-success fw-bold">Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="text-warning fw-bold">Chờ duyệt</span>
+                                }
+                            </td>
+                            <td>
+                                <a href="@Url.Action("ChiTietShipper", "Admin", new { id = s.MaShipper })"
+                                   class="btn btn-outline-info btn-sm" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <form action="@Url.Action("ChapNhanShipper", "Admin")" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@s.MaShipper" />
+                                    <button type="submit" class="btn btn-success btn-sm" title="Chấp nhận">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <form action="@Url.Action("TuChoiShipper", "Admin")" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@s.MaShipper" />
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Từ chối">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">

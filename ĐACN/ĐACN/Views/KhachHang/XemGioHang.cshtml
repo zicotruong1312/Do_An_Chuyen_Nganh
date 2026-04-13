@@ -1,0 +1,178 @@
+﻿@model List<ĐACN.Models.CartItem>
+@using ĐACN.Models
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Giỏ Hàng";
+
+    var nhaHangList = new List<NhaHangGioHang>();
+    if (Model != null && Model.Any())
+    {
+        nhaHangList = Model
+                        .GroupBy(x => x.MaNH)
+                        .Select(g => new NhaHangGioHang
+                        {
+                            MaNH = g.Key,
+                            TenNH = g.First().TenNH
+                        })
+                        .ToList();
+    }
+}
+
+<h2>Giỏ hàng</h2>
+
+@if (TempData["Msg"] != null)
+{
+    <div class="alert alert-info">@TempData["Msg"]</div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <p>Giỏ hàng trống!</p>
+}
+else if (nhaHangList.Any())
+{
+    <label for="chonNH">Chọn nhà hàng:</label>
+    <select id="chonNH" class="form-control" style="width:300px;margin-bottom:15px;">
+        <option value="">-- Chọn nhà hàng --</option>
+        @foreach (var nh in nhaHangList)
+        {
+            <option value="@nh.MaNH">@nh.TenNH</option>
+        }
+    </select>
+
+    <div id="gioHangTheoNH" class="row">
+        <!-- Card giỏ hàng sẽ hiển thị ở đây -->
+    </div>
+}
+
+@section scripts {
+    <script>
+const allItems = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
+
+function renderTable(items) {
+    if (!items.length) {
+        document.getElementById("gioHangTheoNH").innerHTML = "<p>Giỏ hàng trống!</p>";
+        return;
+    }
+
+    const maNH = items[0].MaNH;
+    let tong = 0;
+    let html = '';
+
+    items.forEach(item => {
+        tong += item.ThanhTien;
+        const imageUrl = '@Url.Content("~/images/danhmuc/")' + item.HinhAnh;
+
+        html += `
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <img src="${imageUrl}" class="card-img-top" style="height:180px;object-fit:cover;" alt="${item.TenMon}">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">${item.TenMon}</h5>
+                    <p class="card-text">Giá: <b>${item.Gia.toLocaleString()} đ</b></p>
+                    <div class="d-flex align-items-center mb-2">
+                        <label class="me-2">Số lượng:</label>
+                        <input type="number" class="form-control so-luong" value="${item.SoLuong}" min="1" style="width:70px;text-align:center;" />
+                    </div>
+                    <p class="thanh-tien">Thành tiền: <b>${item.ThanhTien.toLocaleString()} đ</b></p>
+                    <button type="button" class="btn btn-danger mt-auto btn-xoa" data-id="${item.MaMon}">Xóa</button>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    html += `
+    <div class="col-12">
+        <div class="mt-3 p-3 bg-light rounded shadow-sm">
+            <h4>Tổng cộng: <b id="tongCong">${tong.toLocaleString()} đ</b></h4>
+
+            <form action="/KhachHang/DatHang" method="post" class="mt-3">
+                <input type="hidden" name="maNH" value="${maNH}" />
+
+                <div class="mb-3">
+                    <label>Địa chỉ giao hàng:</label>
+                    <input type="text" name="diaChi" class="form-control" required placeholder="Nhập địa chỉ giao hàng...">
+                </div>
+
+                <div class="mb-3">
+                    <label>Số điện thoại:</label>
+                    <input type="text" name="sdt" class="form-control" required placeholder="Nhập số điện thoại nhận hàng...">
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-2">Đặt hàng</button>
+            </form>
+        </div>
+    </div>`;
+
+    document.getElementById("gioHangTheoNH").innerHTML = html;
+
+    // Cập nhật số lượng
+    document.querySelectorAll(".so-luong").forEach(input => {
+        input.addEventListener("change", function () {
+            const row = this.closest(".card");
+            const id = row.querySelector(".btn-xoa").dataset.id;
+            let soLuong = parseInt(this.value);
+            if (isNaN(soLuong) || soLuong < 1) soLuong = 1;
+
+            const gia = parseFloat(allItems.find(i => i.MaMon === id).Gia);
+            const thanhTien = gia * soLuong;
+            row.querySelector(".thanh-tien b").innerText = thanhTien.toLocaleString() + " đ";
+
+            fetch('/KhachHang/CapNhatSoLuong', {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `id=${id}&soLuong=${soLuong}`
+            });
+
+            updateTongCong();
+        });
+    });
+
+    // Xóa món hàng
+    document.querySelectorAll(".btn-xoa").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const id = this.dataset.id;
+            const col = this.closest(".col-md-4");
+
+            fetch('/KhachHang/XoaKhoiGio', {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `id=${id}`
+            }).then(res => {
+                if (res.ok) {
+                    col.remove();
+                    updateTongCong();
+
+                    if (document.querySelectorAll(".col-md-4").length === 0) {
+                        document.getElementById("gioHangTheoNH").innerHTML = "<p>Giỏ hàng trống!</p>";
+                    }
+                }
+            });
+        });
+    });
+}
+
+function updateTongCong() {
+    let tong = 0;
+    document.querySelectorAll(".card").forEach(c => {
+        const id = c.querySelector(".btn-xoa").dataset.id;
+        const gia = parseFloat(allItems.find(i => i.MaMon === id).Gia);
+        const sl = parseInt(c.querySelector(".so-luong").value);
+        tong += gia * sl;
+    });
+    const el = document.getElementById("tongCong");
+    if(el) el.innerText = tong.toLocaleString() + " đ";
+}
+
+// Hiển thị theo nhà hàng
+document.getElementById("chonNH").addEventListener("change", function () {
+    const maNH = this.value;
+    if (!maNH) {
+        document.getElementById("gioHangTheoNH").innerHTML = "";
+        return;
+    }
+    const items = allItems.filter(x => x.MaNH === maNH);
+    renderTable(items);
+});
+    </script>
+}

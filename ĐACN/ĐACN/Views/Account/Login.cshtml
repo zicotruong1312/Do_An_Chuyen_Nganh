@@ -1,0 +1,84 @@
+﻿@{
+    ViewBag.Title = "Đăng nhập";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container" style="max-width:400px; margin-top:80px;">
+    <h2 class="text-center mb-4">Đăng nhập</h2>
+
+    <form id="formLogin" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="form-group mb-3">
+            <label for="username">Tên đăng nhập</label>
+            <input type="text" name="username" id="username" class="form-control" placeholder="Nhập tên đăng nhập" required />
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="password">Mật khẩu</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Nhập mật khẩu" required />
+        </div>
+
+        <div id="loginError" class="alert alert-danger text-center" style="display:none;"></div>
+
+        <div class="form-group mb-3">
+            <button type="submit" class="btn btn-danger w-100">ĐĂNG NHẬP</button>
+        </div>
+
+        <div class="text-center mb-3">
+            <button type="button" class="btn btn-outline-danger w-100 mb-2">
+                <i class="fa fa-google"></i> Đăng nhập với Google
+            </button>
+        </div>
+
+        <div class="text-center">
+            <a href="#">Quên mật khẩu?</a> |
+            <a href="/Account/Register">Tạo tài khoản của bạn</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#formLogin").submit(function (e) {
+                e.preventDefault();
+
+                var username = $("#username").val();
+                var password = $("#password").val();
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.ajax({
+                    url: '/Account/Login',
+                    type: 'POST',
+                    data: {
+                        username: username,
+                        password: password,
+                        __RequestVerificationToken: token
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            // Redirect theo vai trò
+                            if (res.role === "Shipper") {
+                                window.location.href = '/Shipper/Index';
+                            } else if (res.role === "Admin") {
+                                window.location.href = '/Admin/DanhSachCuaHang';
+                            } else if (res.role === "NhaHang") {
+                                window.location.href = '/NhaHang/ThongKe';
+                            } else {
+                                // KhachHang hoặc mặc định
+                                window.location.href = '/Home/TrangChu';
+                            }
+                        } else {
+                            $("#loginError").text(res.message).show();
+                        }
+                    },
+                    error: function () {
+                        $("#loginError").text("Có lỗi xảy ra. Vui lòng thử lại.").show();
+                    }
+                });
+            });
+        });
+    </script>
+}

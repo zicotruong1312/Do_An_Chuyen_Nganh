@@ -1,0 +1,115 @@
+﻿@{
+    ViewBag.Title = "Đăng ký tài khoản";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container" style="max-width:500px; margin-top:60px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <h3 class="text-center text-danger mb-4 fw-bold">
+                <i class="bi bi-person-plus"></i> Đăng ký tài khoản
+            </h3>
+
+            <div id="registerError" class="alert alert-danger text-center" style="display:none;"></div>
+            <div id="registerSuccess" class="alert alert-success text-center" style="display:none;"></div>
+
+            <form id="formRegister" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group mb-3">
+                    <label class="fw-semibold">Tên đăng nhập</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Nhập tên đăng nhập" required />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="fw-semibold">Mật khẩu</label>
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Nhập mật khẩu" required />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="fw-semibold">Email</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="Nhập email" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="fw-semibold">Họ tên</label>
+                    <input type="text" name="fullname" id="fullname" class="form-control" placeholder="Nhập họ tên đầy đủ" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="fw-semibold">Số điện thoại</label>
+                    <input type="text" name="phone" id="phone" class="form-control" placeholder="Nhập số điện thoại" />
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="fw-semibold">Địa chỉ</label>
+                    <input type="text" name="address" id="address" class="form-control" placeholder="Nhập địa chỉ cụ thể" />
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold">
+                    <i class="bi bi-check2-circle"></i> Đăng ký
+                </button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p>
+                    Đã có tài khoản?
+                    <a href="/Account/Login" class="text-decoration-none text-danger fw-semibold">Đăng nhập ngay</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#formRegister").submit(function (e) {
+                e.preventDefault();
+
+                var username = $("#username").val();
+                var password = $("#password").val();
+                var email = $("#email").val();
+                var fullname = $("#fullname").val();
+                var phone = $("#phone").val();
+                var address = $("#address").val();
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
+                $.ajax({
+                    url: '/Account/Register',
+                    type: 'POST',
+                    data: {
+                        username: username,
+                        password: password,
+                        email: email,
+                        fullname: fullname,
+                        phone: phone,
+                        address: address,
+                        __RequestVerificationToken: token
+                    },
+                    success: function (res) {
+                        // Nếu controller trả về JSON (bạn có thể thay đổi controller để trả JSON)
+                        if (res && res.success) {
+                            $("#registerError").hide();
+                            $("#registerSuccess").text(res.message || "Đăng ký thành công! Vui lòng kiểm tra email.").show();
+                            setTimeout(function () {
+                                window.location.href = '/Account/Login';
+                            }, 2000);
+                        } else {
+                            $("#registerSuccess").hide();
+                            $("#registerError").text(res.message || "Có lỗi xảy ra, vui lòng thử lại.").show();
+                        }
+                    },
+                    error: function () {
+                        $("#registerSuccess").hide();
+                        $("#registerError").text("Có lỗi xảy ra, vui lòng thử lại.").show();
+                    }
+                });
+            });
+        });
+    </script>
+}

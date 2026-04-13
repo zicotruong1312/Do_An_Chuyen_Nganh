@@ -1,0 +1,94 @@
+﻿@{
+    ViewBag.Title = "Thống kê";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<h2 class="text-center mb-4">Thống kê</h2>
+
+<div class="d-flex justify-content-between mb-3">
+    <!-- Chọn kiểu thống kê: Tháng hoặc Quý -->
+    <form method="get">
+        <select name="type" class="form-select d-inline-block" style="width:150px;" onchange="this.form.submit()">
+            <option value="Tháng" @(ViewBag.Type == "Tháng" ? "selected" : "")>Tháng</option>
+            <option value="Quý" @(ViewBag.Type == "Quý" ? "selected" : "")>Quý</option>
+        </select>
+    </form>
+
+    <!-- Xuất file -->
+    <form method="post" action="@Url.Action("ExportThongKe", "Admin")">
+        <select name="format" class="form-select d-inline-block" style="width:150px;">
+            <option value="excel">Xuất Excel</option>
+            <!-- PDF chưa có logic, để sau -->
+        </select>
+        <button type="submit" class="btn btn-primary ms-2">Xuất file</button>
+    </form>
+</div>
+
+<hr />
+
+<h4>Thống kê người dùng</h4>
+<canvas id="chartUsers"></canvas>
+
+<h4 class="mt-5">Thống kê doanh thu</h4>
+<canvas id="chartRevenue"></canvas>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ===== Biểu đồ người dùng =====
+        const ctxUsers = document.getElementById('chartUsers').getContext('2d');
+        const chartUsers = new Chart(ctxUsers, {
+            type: 'bar',
+            data: {
+                labels: ["Khách hàng", "Chủ cửa hàng", "Người giao hàng"],
+                datasets: [{
+                    label: 'Số lượng người dùng',
+                    data: [@ViewBag.KhachHang, @ViewBag.NhaHang, @ViewBag.Shipper],
+                    backgroundColor: ['#f44336', '#ffeb3b', '#4caf50'],
+                    borderColor: '#2196f3',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // ===== Biểu đồ doanh thu =====
+        const revenueData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.DoanhThu));
+        const chartType = "@ViewBag.Type";
+
+        // Chuẩn bị nhãn và giá trị
+        const labels = revenueData.map(item => {
+            if (chartType === "Tháng") {
+                return `T${item.Thang}/${item.Nam}`;
+            } else {
+                // Quý
+                return `Q${item.Thang}/${item.Nam}`; // item.Thang ở đây là số quý
+            }
+        });
+
+        const values = revenueData.map(item => item.DoanhThu);
+
+        const ctxRevenue = document.getElementById('chartRevenue').getContext('2d');
+        const chartRevenue = new Chart(ctxRevenue, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: values,
+                    backgroundColor: 'rgba(3, 169, 244, 0.4)',
+                    borderColor: '#0288d1',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    </script>
+}

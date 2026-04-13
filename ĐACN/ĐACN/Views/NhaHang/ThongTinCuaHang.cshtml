@@ -1,0 +1,116 @@
+﻿@model ĐACN.NhaHang
+@{
+    ViewBag.Title = "Thông tin cửa hàng";
+    ViewBag.Active = "ThongTin";
+    Layout = "~/Views/Shared/_LayoutNhaHang.cshtml";
+}
+
+<div class="container mt-4">
+
+    <h4 class="fw-bold text-primary mb-4">Thông tin cửa hàng</h4>
+
+    @using (Html.BeginForm("CapNhatThongTinCuaHang", "NhaHang", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="MaNH" value="@Model.MaNH" />
+
+        <div class="row">
+            <!-- Avatar -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-0 p-3 text-center position-relative">
+
+                    <img id="previewImage"
+                         src="@(string.IsNullOrEmpty(Model.HinhAnh) ? Url.Content("~/images/no-image.png") : Url.Content(Model.HinhAnh))"
+                         class="rounded-circle border"
+                         style="width:160px;height:160px;object-fit:cover;" />
+
+                    <!-- Nút + upload -->
+                    <label for="HinhAnhMoi"
+                           class="btn btn-primary position-absolute"
+                           style="bottom:20px; right:20px; border-radius:50%; width:45px; height:45px; padding:0;">
+                        <i class="bi bi-plus-lg fs-4 text-white"></i>
+                    </label>
+
+                    <input type="file"
+                           name="HinhAnhMoi"
+                           id="HinhAnhMoi"
+                           accept=".jpg,.jpeg,.png,.gif"
+                           class="d-none" />
+                </div>
+            </div>
+
+            <!-- Thông tin -->
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 p-4">
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Tên quán</label>
+                        <input type="text" class="form-control" name="TenNH" value="@Model.TenNH" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Địa chỉ</label>
+                        <input type="text" class="form-control" name="DiaChi" value="@Model.DiaChi" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Số điện thoại</label>
+                        <input type="text" class="form-control" name="SDT" value="@Model.SDT" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Mô tả</label>
+                        <textarea class="form-control" name="MoTa" rows="3">@Model.MoTa</textarea>
+                    </div>
+
+                    <hr />
+
+                    <h5 class="text-secondary">Mật khẩu</h5>
+
+                    <div class="mb-3">
+                        <label class="fw-semibold">Mật khẩu hiện tại</label>
+                        <input type="text"
+                               class="form-control"
+                               name="MatKhauHienTai"
+                        <input type="text"
+                               class="form-control"
+                               name="MatKhauHienTai"
+                               value="@ViewBag.MatKhauHienTai" />
+
+                        readonly />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-semibold">Mật khẩu mới (nếu muốn đổi)</label>
+                            <input type="password" class="form-control" name="MatKhauMoi" />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-semibold">Xác nhận mật khẩu</label>
+                            <input type="password" class="form-control" name="XacNhanMatKhau" />
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="bi bi-save"></i> Lưu thay đổi
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+<script>
+    // Preview ảnh trước khi upload
+    document.getElementById("HinhAnhMoi").addEventListener("change", function (e) {
+        let file = e.target.files[0];
+        if (file) {
+            document.getElementById("previewImage").src = URL.createObjectURL(file);
+        }
+    });
+</script>

@@ -1,0 +1,70 @@
+﻿@model IEnumerable<ĐACN.DonHang>
+
+@{
+    ViewBag.Title = "Danh sách đơn hàng";
+    Layout = "~/Views/Shared/_LayoutNhaHang.cshtml";
+}
+
+<div class="container mt-4">
+    <h3 class="mb-3 text-primary">Danh sách đơn hàng</h3>
+
+    <form method="get" action="@Url.Action("DanhSachDonHang", "NhaHang")" class="row mb-4">
+        <div class="col-md-3">
+            <label>Từ ngày</label>
+            <input type="date" name="tuNgay" class="form-control" value="@ViewBag.TuNgay" />
+        </div>
+        <div class="col-md-3">
+            <label>Đến ngày</label>
+            <input type="date" name="denNgay" class="form-control" value="@ViewBag.DenNgay" />
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Shipper</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Không có đơn hàng nào</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var don in Model)
+                {
+                    <tr>
+                        <td>@don.MaDon</td>
+                        <td>@don.KhachHang?.TenKH</td>
+                        <td>@don.ThoiGianDat?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@string.Format("{0:N0} đ", don.TongTien)</td>
+                        <td>
+                            <span class="badge @(don.TrangThai == true ? "bg-success" : "bg-warning text-dark")">
+                                @(don.TrangThai == true ? "Hoàn tất" : "Đang xử lý")
+                            </span>
+                        </td>
+                        <td>@don.Shipper?.TenShipper</td>
+                        <td>
+                            <a href="@Url.Action("ChiTietDonHang", "NhaHang", new { id = don.MaDon })"
+                               class="btn btn-sm btn-info text-white">
+                                Xem
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

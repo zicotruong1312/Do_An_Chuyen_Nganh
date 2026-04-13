@@ -1,0 +1,200 @@
+﻿@using ĐACN.Models
+@{
+    Layout = null;
+
+    // Tự động login theo cookie nếu chưa có session
+    var accountController = new ĐACN.Controllers.AccountController();
+    accountController.ControllerContext = new System.Web.Mvc.ControllerContext(this.Request.RequestContext, accountController);
+    accountController.AutoLoginTheoIP();
+
+    var tk = Session["TaiKhoan"] as TaiKhoan;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - ZFood</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/trangchu.css" rel="stylesheet" />
+
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Mũi tên xuống cho dropdown */
+        .nav-item.dropdown > a::after {
+            content: "▾";
+            font-size: 0.8em;
+            margin-left: 4px;
+            transition: transform 0.3s;
+        }
+
+        .nav-item.dropdown > a {
+            text-decoration: none;
+            border: none;
+        }
+
+        .dropdown-submenu {
+            position: relative;
+        }
+
+            .dropdown-submenu > .dropdown-menu {
+                top: 0;
+                left: 100%;
+                margin-left: 0.1rem;
+                display: none;
+            }
+
+        @@media (min-width: 992px) {
+            .dropdown-submenu:hover > .dropdown-menu {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="@Url.Action("TrangChu", "Home")">ZFood</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="@Url.Action("TrangChu", "Home")">Trang chủ</a></li>
+                    <li class="nav-item"><a class="nav-link require-login" href="@Url.Action("DanhMuc", "Home")">Danh mục</a></li>
+                    <li class="nav-item"><a class="nav-link require-login" href="@Url.Action("NhaHang", "Home")">Nhà hàng nổi bật</a></li>
+
+                    @if (tk != null)
+                    {
+                        if (tk.VaiTro == "KhachHang")
+                        {
+                            <li class="nav-item"><a class="nav-link" href="@Url.Action("DonHangCuaToi", "KhachHang")">Đơn hàng</a></li>
+                            <li class="nav-item"><a class="nav-link" href="@Url.Action("XemGioHang", "KhachHang")">Giỏ hàng</a></li>
+                        }
+
+                        if (tk.VaiTro == "Admin")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle fw-semibold" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Quản trị
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                                    <!-- Admin menu -->
+                                </ul>
+                            </li>
+                        }
+
+                        if (tk.VaiTro == "NhaHang")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle fw-semibold" href="#" id="nhahangDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Quản lý
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="nhahangDropdown">
+                                    <li><a class="dropdown-item" href="@Url.Action("ChinhSuaSanPham", "NhaHang")">Chỉnh sửa sản phẩm</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("ChiTietDonHang", "NhaHang")">Chi tiết đơn hàng</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("DanhSachDonHang", "NhaHang")">Danh sách đơn hàng</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("QuanLySanPham", "NhaHang")">Quản lý sản phẩm</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("ThemSanPham", "NhaHang")">Thêm sản phẩm</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("ThongKe", "NhaHang")">Thống kê</a></li>
+                                    <li><a class="dropdown-item" href="@Url.Action("ThongTinCuaHang", "NhaHang")">Thông tin cửa hàng</a></li>
+                                </ul>
+                            </li>
+                        }
+
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @tk.TenDangNhap
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="@Url.Action("HoSo", "KhachHang")">Hồ sơ</a></li>
+                                <li><a class="dropdown-item" href="@Url.Action("CaiDat", "KhachHang")">Cài đặt</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li><a class="dropdown-item" href="@Url.Action("Logout", "Account")">Đăng xuất</a></li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <!-- Chuyển nút Đăng nhập sang view Login -->
+                        <li class="nav-item">
+                            <a class="btn btn-danger ms-2" href="@Url.Action("Login", "Account")">Đăng nhập</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Body -->
+    <main class="body-content mt-4">
+        @RenderBody()
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center text-muted small mt-5 mb-3">
+        <p>&copy; @DateTime.Now.Year - ZFood Delivery</p>
+        <p>Hotline: 1900 9999 | Email: support@zfood.vn</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        // Hover dropdown desktop
+        $(document).ready(function () {
+            $('.nav-item.dropdown').hover(
+                function () {
+                    if ($(window).width() > 992) {
+                        $(this).addClass('show');
+                        $(this).find('> .dropdown-menu').first().addClass('show');
+                    }
+                },
+                function () {
+                    if ($(window).width() > 992) {
+                        $(this).removeClass('show');
+                        $(this).find('> .dropdown-menu').first().removeClass('show');
+                    }
+                }
+            );
+
+            $('.dropdown-submenu').hover(
+                function () {
+                    if ($(window).width() > 992) {
+                        $(this).addClass('show');
+                        $(this).find('> .dropdown-menu').first().addClass('show');
+                    }
+                },
+                function () {
+                    if ($(window).width() > 992) {
+                        $(this).removeClass('show');
+                        $(this).find('> .dropdown-menu').first().removeClass('show');
+                    }
+                }
+            );
+
+            $('.nav-item.dropdown > a, .dropdown-submenu > a').click(function (e) {
+                if ($(window).width() < 992) {
+                    e.preventDefault();
+                    $(this).parent().toggleClass('show');
+                    $(this).siblings('.dropdown-menu').toggleClass('show');
+                }
+            });
+        });
+    </script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

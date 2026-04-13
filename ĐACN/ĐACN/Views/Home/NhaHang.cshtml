@@ -1,0 +1,129 @@
+﻿@using ĐACN.Models
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Nhà Hàng";
+
+    // Kiểm tra session user
+    var tk = Session["TaiKhoan"] as TaiKhoan;
+}
+
+@model IEnumerable<NhaHangViewModel>
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4 fw-bold">🏙️ Danh Sách Nhà Hàng</h2>
+
+    <div class="row">
+        @if (Model == null || !Model.Any())
+        {
+            <p class="text-center text-muted mt-3">Hiện chưa có nhà hàng nào để hiển thị.</p>
+        }
+        else
+        {
+            foreach (var nh in Model)
+            {
+                <div class="col-6 col-sm-4 col-md-4 col-lg-3 mb-4">
+                    <div class="restaurant-card shadow-sm" style="border-radius:12px;overflow:hidden;text-align:center;cursor:pointer;transition:all 0.3s ease;">
+                        <a href="@Url.Action("XemMenu", "KhachHang", new { id = nh.MaNH })"
+                           class="restaurant-link require-login"
+                           data-id="@nh.MaNH"
+                           style="text-decoration:none; color:inherit;">
+                            <img src="~/images/nhahang/@nh.HinhAnh" alt="@nh.TenNH" class="restaurant-img"
+                                 style="width:100%;aspect-ratio:1/1;object-fit:contain;background-color:#f8f8f8;border-top-left-radius:12px;border-top-right-radius:12px;transition:transform 0.3s ease;" />
+                            <div class="restaurant-body" style="padding:12px 16px;">
+                                <h5 style="font-weight:600;margin-bottom:6px;">@nh.TenNH</h5>
+                                <p style="font-size:0.9rem;color:#666;margin-bottom:6px;">@nh.DiaChi</p>
+                                <p class="rating" style="color:#ff9800;font-weight:500;font-size:0.95rem;">⭐ @nh.Rating.ToString("0.0") / 10</p>
+                                <p>🛒 @nh.TongLuotMua lượt mua</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Modal Đăng nhập -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Đăng nhập</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Tên đăng nhập</label>
+                        <input type="text" class="form-control" id="username" name="username" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mật khẩu</label>
+                        <input type="password" class="form-control" id="password" name="password" required />
+                    </div>
+                    <div id="loginError" class="text-danger mb-2" style="display:none;"></div>
+                    <button type="submit" class="btn btn-danger w-100">Đăng nhập</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+
+<script>
+    $(document).ready(function () {
+        var isLoggedIn = @((tk != null).ToString().ToLower());
+
+        // Chặn link nhà hàng nếu chưa đăng nhập
+        $(".require-login").click(function (e) {
+            if (!isLoggedIn) {
+                e.preventDefault();
+                $("#loginModal").modal('show');
+            }
+        });
+
+        // Ajax xử lý form login
+        $("#loginForm").submit(function (e) {
+            e.preventDefault();
+            const username = $("#username").val();
+            const password = $("#password").val();
+
+            $.ajax({
+                url: '@Url.Action("Login", "Account")',
+                type: 'POST',
+                data: { username: username, password: password },
+                success: function (res) {
+                    if (res.success) {
+                        $("#loginModal").modal('hide');
+                        location.reload();
+                    } else {
+                        $("#loginError").text(res.message).show();
+                    }
+                },
+                error: function () {
+                    $("#loginError").text("Đã xảy ra lỗi khi đăng nhập.").show();
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .restaurant-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+
+        .restaurant-card:hover img {
+            transform: scale(1.03);
+        }
+
+    @@media (max-width:768px) {
+        .restaurant-img {
+            aspect-ratio: 1/1;
+        }
+    }
+</style>

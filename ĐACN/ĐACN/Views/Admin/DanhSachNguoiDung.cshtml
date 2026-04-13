@@ -1,0 +1,144 @@
+﻿@model IEnumerable<ĐACN.KhachHang>
+
+@{
+    ViewBag.Title = "Danh sách người dùng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<h2 class="text-center mb-4 fw-bold text-primary">
+    <i class="bi bi-people"></i> Danh sách người dùng
+</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <form method="get" class="row g-2 flex-grow-1">
+        <div class="col-md-5">
+            <input type="text" name="keyword" value="@ViewBag.Keyword"
+                   placeholder="Nhập tên hoặc số điện thoại..."
+                   class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="Hoạt động" @(ViewBag.Status == "Hoạt động" ? "selected" : "")>Hoạt động</option>
+                <option value="Bị khóa" @(ViewBag.Status == "Bị khóa" ? "selected" : "")>Bị khóa</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100">
+                <i class="bi bi-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </form>
+
+    <a href="@Url.Action("ThemNguoiDung", "Admin")" class="btn btn-success">
+        <i class="bi bi-person-plus"></i> Thêm mới
+    </a>
+</div>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success text-center fw-bold">
+        @TempData["Message"]
+    </div>
+}
+
+<table class="table table-hover align-middle shadow-sm">
+    <thead class="table-dark text-center">
+        <tr>
+            <th>STT</th>
+            <th>Tên người dùng</th>
+            <th>Số điện thoại</th>
+            <th>Địa chỉ</th>
+            <th>Tên đăng nhập</th>
+            <th>Vai trò</th>
+            <th>Trạng thái TK</th>
+            <th>Chi tiết</th>
+            <th>Khóa/Mở</th>
+            <th>Xóa</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            int stt = 1;
+        }
+        @foreach (var kh in Model)
+        {
+            <tr class="text-center">
+                <td>@stt</td>
+                <td>@kh.TenKH</td>
+                <td>@kh.SDT</td>
+                <td>@kh.DiaChi</td>
+                <td>@(kh.TaiKhoan?.TenDangNhap ?? "Chưa có")</td>
+                <td>@(kh.TaiKhoan?.VaiTro ?? "-")</td>
+                <td>
+                    @if (kh.TaiKhoan?.TrangThai == true)
+                    {
+                        <span class="text-success fw-bold">Hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="text-danger fw-bold">Bị khóa</span>
+                    }
+                </td>
+                <td>
+                    <a href="@Url.Action("ChiTietNguoiDung", "Admin", new { id = kh.MaKH })"
+                       class="btn btn-info btn-sm">
+                        <i class="bi bi-eye"></i> Xem
+                    </a>
+                </td>
+                <td>
+                    <form action="@Url.Action("DoiTrangThaiNguoiDung", "Admin")"
+                          method="post"
+                          style="display:inline;">
+                        <input type="hidden" name="id" value="@kh.MaKH" />
+                        @if (kh.TaiKhoan?.TrangThai == true)
+                        {
+                            <button type="submit" class="btn btn-warning btn-sm">
+                                <i class="bi bi-lock"></i> Khóa
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-unlock"></i> Mở
+                            </button>
+                        }
+                    </form>
+                </td>
+                <td>
+                    <form action="@Url.Action("XoaNguoiDung", "Admin")"
+                          method="post"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa người dùng này không?');"
+                          style="display:inline;">
+                        <input type="hidden" name="id" value="@kh.MaKH" />
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            stt++;
+        }
+    </tbody>
+</table>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    table {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    th {
+        vertical-align: middle !important;
+    }
+
+    td {
+        vertical-align: middle !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>

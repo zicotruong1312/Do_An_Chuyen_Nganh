@@ -1,0 +1,144 @@
+﻿@{
+    ViewBag.Title = "Thống kê doanh thu & đơn hàng";
+    Layout = "~/Views/Shared/_LayoutNhaHang.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <select class="form-select">
+                <option>Ngày</option>
+                <option>Tháng</option>
+                <option>Quý</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select">
+                <option>Thống kê doanh thu</option>
+                <option>Thống kê đơn hàng</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Biểu đồ doanh thu theo loại món ăn -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white fw-bold">Biểu đồ doanh thu theo loại món ăn</div>
+                <div class="card-body">
+                    <canvas id="chartDoanhThuTheoLoai"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Biểu đồ doanh thu theo thời gian -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white fw-bold">Doanh thu theo thời gian</div>
+                <div class="card-body">
+                    <canvas id="chartDoanhThu"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Biểu đồ trạng thái đơn hàng -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark fw-bold">Tỉ lệ trạng thái đơn hàng</div>
+                <div class="card-body">
+                    <canvas id="chartTrangThaiDonHang"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Món ăn bán chạy -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-light fw-bold">
+                    <i class="bi bi-star-fill text-warning"></i> Món ăn bán chạy nhất
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped text-center align-middle">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Tên món</th>
+                                <th>Giá (VNĐ)</th>
+                                <th>Tổng số lượng bán</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (ViewBag.TopSanPham != null && ((IEnumerable<dynamic>)ViewBag.TopSanPham).Any())
+                            {
+                                foreach (var item in (IEnumerable<dynamic>)ViewBag.TopSanPham)
+                                {
+                                    <tr>
+                                        <td>@item.TenMon</td>
+                                        <td>@String.Format("{0:N0}", item.Gia)</td>
+                                        <td>@item.SoLuongBan</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-muted">Chưa có dữ liệu</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Biểu đồ doanh thu theo loại món
+        new Chart(document.getElementById("chartDoanhThuTheoLoai"), {
+            type: 'pie',
+            data: {
+                labels: @Html.Raw(Json.Encode(ViewBag.LabelsLoai)),
+                datasets: [{
+                    data: @Html.Raw(Json.Encode(ViewBag.DataDoanhThuLoai)),
+                    backgroundColor: ['#0d6efd', '#ffc107', '#28a745', '#dc3545', '#20c997']
+                }]
+            }
+        });
+
+        // Biểu đồ doanh thu theo thời gian
+        new Chart(document.getElementById("chartDoanhThu"), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Encode(ViewBag.LabelsThoiGian)),
+                datasets: [{
+                    label: 'Doanh thu (VNĐ)',
+                    data: @Html.Raw(Json.Encode(ViewBag.DataDoanhThu)),
+                    backgroundColor: '#0dcaf0'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Biểu đồ trạng thái đơn hàng
+        new Chart(document.getElementById("chartTrangThaiDonHang"), {
+            type: 'pie',
+            data: {
+                labels: ['Đang xử lý', 'Đã giao', 'Đã hủy'],
+                datasets: [{
+                    data: @Html.Raw(Json.Encode(ViewBag.DataTrangThaiDonHang)),
+                    backgroundColor: ['#ffc107', '#28a745', '#dc3545']
+                }]
+            }
+        });
+    </script>
+}

@@ -1,0 +1,189 @@
+@model IEnumerable<ĐACN.Models.AcceptedOrderView>
+
+@{
+    ViewBag.Title = "Đơn đã nhận";
+    Layout = "~/Views/Shared/_LayoutShipper.cshtml";
+}
+
+@functions {
+    // Helper function tính thời gian đã trôi qua
+    public static string GetTimeAgo(DateTime? dateTime)
+    {
+        if (!dateTime.HasValue) return "";
+
+        var timeSpan = DateTime.Now - dateTime.Value;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "Vừa xong";
+        else if (timeSpan.TotalMinutes < 60)
+            return string.Format("{0} phút trước", (int)timeSpan.TotalMinutes);
+        else if (timeSpan.TotalHours < 24)
+            return string.Format("{0} giờ trước", (int)timeSpan.TotalHours);
+        else
+            return string.Format("{0} ngày trước", (int)timeSpan.TotalDays);
+    }
+
+    // Helper function lấy màu badge trạng thái
+    public static string GetStatusBadgeClass(string trangThai)
+    {
+        if (string.IsNullOrWhiteSpace(trangThai))
+            return "bg-secondary";
+
+        string statusLower = trangThai.ToLower();
+        if (statusLower.Contains("chờ") && statusLower.Contains("xác nhận"))
+            return "bg-warning";
+        else if (statusLower.Contains("đã xác nhận"))
+            return "bg-info";
+        else if (statusLower.Contains("đang chuẩn bị"))
+            return "bg-primary";
+        else if (statusLower.Contains("đang giao"))
+            return "bg-success";
+        else if (statusLower.Contains("hoàn thành"))
+            return "bg-success";
+        else if (statusLower.Contains("đã hủy") || statusLower.Contains("hủy"))
+            return "bg-danger";
+        else
+            return "bg-secondary";
+    }
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Đơn đã nhận</h2>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["Message"]
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            @if (Model == null || !Model.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <small>Hiện không có đơn</small>
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var o in Model)
+                    {
+                        <div class="list-group-item py-3 shadow-sm rounded-3 mb-3">
+                            <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                <div class="d-flex flex-column flex-grow-1">
+                                    <!-- Header: Mã đơn, tổng tiền, trạng thái, thời gian, số lượng món -->
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                                        <h6 class="m-0">#@o.MaDon</h6>
+                                        <span class="badge bg-primary">@String.Format("{0:N0}", o.TongTien ?? 0) đ</span>
+                                        @if (!string.IsNullOrWhiteSpace(o.TrangThai))
+                                        {
+                                            <span class="badge @GetStatusBadgeClass(o.TrangThai)">@o.TrangThai</span>
+                                        }
+                                        @if (o.ThoiGianDat.HasValue)
+                                        {
+                                            <small class="text-muted">
+                                                ⏰ @GetTimeAgo(o.ThoiGianDat)
+                                            </small>
+                                        }
+                                        @if (o.SoLuongMon > 0)
+                                        {
+                                            <small class="text-muted">
+                                                📦 @o.SoLuongMon món
+                                            </small>
+                                        }
+                                    </div>
+
+                                    <!-- Thông tin nhà hàng -->
+                                    <div class="mb-2">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <small class="text-muted fw-bold">🏪 Nhà hàng:</small>
+                                            <div class="d-flex flex-column">
+                                                <small class="text-muted">@o.TenNhaHang</small>
+                                                <small class="text-muted">📍 @o.DiaChiNhaHang</small>
+                                                @if (!string.IsNullOrWhiteSpace(o.SDTNhaHang))
+                                                {
+                                                    <small class="text-muted">
+                                                        📞 <a href="tel:@o.SDTNhaHang" class="text-decoration-none">@o.SDTNhaHang</a>
+                                                    </small>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Thông tin khách hàng -->
+                                    <div class="mb-2">
+                                        <div class="d-flex align-items-start gap-2">
+                                            <small class="text-muted fw-bold">👤 Khách hàng:</small>
+                                            <div class="d-flex flex-column">
+                                                <small class="text-muted">@o.TenKhachHang</small>
+                                                <small class="text-muted">📍 @(string.IsNullOrWhiteSpace(o.DiaChi) ? o.DiaChiKhachHang : o.DiaChi)</small>
+                                                @{
+                                                    var Sdt = !string.IsNullOrWhiteSpace(o.Sdt) ? o.Sdt : o.SDTKhachHang;
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(Sdt))
+                                                {
+                                                    <small class="text-muted">
+                                                        📞 <a href="tel:@Sdt" class="text-decoration-none">@Sdt</a>
+                                                    </small>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Danh sách tóm tắt món ăn -->
+                                    @if (!string.IsNullOrWhiteSpace(o.DanhSachMonTomTat))
+                                    {
+                                        <div class="mb-2">
+                                            <small class="text-muted">
+                                                <strong>📦 Món ăn:</strong> @o.DanhSachMonTomTat
+                                            </small>
+                                        </div>
+                                    }
+
+                                    <!-- Chi tiết món ăn -->
+                                    @if (o.ChiTietMonAn != null && o.ChiTietMonAn.Any())
+                                    {
+                                        <div class="mb-2">
+                                            <small class="text-muted fw-bold">📋 Chi tiết đơn hàng:</small>
+                                            <div class="mt-1">
+                                                @foreach (var mon in o.ChiTietMonAn)
+                                                {
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <small class="text-muted">
+                                                            • @mon.TenMon x @mon.SoLuong
+                                                        </small>
+                                                        <small class="text-muted">
+                                                            @String.Format("{0:N0}", mon.ThanhTien) đ
+                                                        </small>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <!-- Nút hành động -->
+                                <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+                                    <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Details", "Shipper", new { maDon = o.MaDon })">Xem chi tiết</a>
+                                    @if (!string.IsNullOrWhiteSpace(o.TrangThai) && o.TrangThai.ToLower() != "hoàn thành" && o.TrangThai.ToLower() != "hoanthanh")
+                                    {
+                                        using (Html.BeginForm("Cancel", "Shipper", FormMethod.Post, new { @class = "m-0" }))
+                                        {
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="maDon" value="@o.MaDon" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Hủy nhận</button>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

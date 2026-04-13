@@ -1,0 +1,213 @@
+﻿@model FoodDeliveryDB.Models.NhaHang
+
+@{
+    ViewBag.Title = "Chi tiết cửa hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    bool isEdit = ViewBag.EditMode == true;
+}
+
+<div class="container mt-4">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4><i class="bi bi-shop"></i> Thông tin chi tiết cửa hàng</h4>
+            <a href="@Url.Action("DanhSachCuaHang", "Admin")" class="btn btn-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+
+        <div class="card-body">
+            @using (Html.BeginForm("SuaNhaHang", "Admin", FormMethod.Post, new { enctype = "multipart/form-data" }))
+            {
+                @Html.HiddenFor(m => m.MaNH)
+
+                <div class="row mb-4">
+                    <div class="col-md-4 text-center border-end">
+                        <div class="position-relative d-inline-block">
+                            <img src="@(string.IsNullOrEmpty(Model.HinhAnh)
+                                ? Url.Content("~/Content/images/default-restaurant.png")
+                                : Url.Content("~" + Model.HinhAnh))"
+                                 alt="Hình nhà hàng"
+                                 class="rounded border mb-2"
+                                 width="220" height="180"
+                                 id="previewNhaHang" />
+
+                            @if (isEdit)
+                            {
+                                <label for="HinhAnhFile"
+                                       class="position-absolute bottom-0 end-0 bg-dark text-white rounded-circle p-2"
+                                       style="cursor:pointer; transform: translate(20%, 20%);">
+                                    <i class="bi bi-plus-lg"></i>
+                                </label>
+                                <input type="file" id="HinhAnhFile" name="HinhAnhFile"
+                                       accept="image/*" class="d-none" onchange="previewNhaHangImage(event)" />
+                            }
+                        </div>
+
+                        <h5 class="fw-bold mt-2">@Model.TenNH</h5>
+                        <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> @Model.DiaChi</p>
+                        <p class="text-muted"><i class="bi bi-telephone"></i> @Model.SDT</p>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tên cửa hàng</label>
+                                @if (isEdit)
+                                {
+                                    @Html.TextBoxFor(m => m.TenNH, new { @class = "form-control", required = "required" })
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">@Model.TenNH</p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Địa chỉ</label>
+                                @if (isEdit)
+                                {
+                                    @Html.TextBoxFor(m => m.DiaChi, new { @class = "form-control", required = "required" })
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">@Model.DiaChi</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Số điện thoại</label>
+                                @if (isEdit)
+                                {
+                                    @Html.TextBoxFor(m => m.SDT, new { @class = "form-control" })
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">@Model.SDT</p>
+                                }
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Trạng thái cửa hàng</label>
+                                @if (isEdit)
+                                {
+                                    <select name="TrangThai" class="form-select">
+                                        <option value="Đang mở cửa" @(Model.TrangThai == "Đang mở cửa" ? "selected" : "")>Đang mở cửa</option>
+                                        <option value="Đã đóng cửa" @(Model.TrangThai == "Đã đóng cửa" ? "selected" : "")>Đã đóng cửa</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">@Model.TrangThai</p>
+                                }
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tên đăng nhập</label>
+                                @if (isEdit)
+                                {
+                                    @Html.TextBox("TenDangNhap", Model.TaiKhoan != null ? Model.TaiKhoan.TenDangNhap : "", new { @class = "form-control", required = "required" })
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">
+                                        @(Model.TaiKhoan != null ? Model.TaiKhoan.TenDangNhap : "Chưa có")
+                                    </p>
+                                }
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Mật khẩu</label>
+                                @if (isEdit)
+                                {
+                                    <div class="input-group">
+                                        <input type="password" name="MatKhau" id="matKhauInput"
+                                               value="@(Model.TaiKhoan?.MatKhau)" class="form-control" placeholder="Nhập mật khẩu mới..." />
+                                        <button type="button" class="btn btn-outline-secondary"
+                                                onclick="togglePassword()" title="Hiển thị / Ẩn mật khẩu">
+                                            <i class="bi bi-eye" id="toggleIcon"></i>
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <p class="form-control-plaintext">@(Model.TaiKhoan != null ? Model.TaiKhoan.MatKhau : "Chưa có")</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Trạng thái tài khoản</label>
+                                <p class="form-control-plaintext">
+                                    @if (Model.TaiKhoan?.TrangThai == true)
+                                    {
+                                        <span class="text-success fw-bold">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-bold">Bị khóa</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            @if (!isEdit)
+                            {
+                                <a href="@Url.Action("ChiTietNhaHang", "Admin", new { id = Model.MaNH, edit = true })" class="btn btn-warning">
+                                    <i class="bi bi-pencil-square"></i> Sửa thông tin
+                                </a>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-save"></i> Lưu thay đổi
+                                </button>
+                                <a href="@Url.Action("ChiTietNhaHang", "Admin", new { id = Model.MaNH })" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Hủy
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success mt-3 text-center fw-bold">@TempData["Message"]</div>
+    }
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+    function previewNhaHangImage(event) {
+        const input = event.target;
+        const reader = new FileReader();
+        reader.onload = function () {
+            document.getElementById("previewNhaHang").src = reader.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function togglePassword() {
+        const passwordInput = document.getElementById("matKhauInput");
+        const icon = document.getElementById("toggleIcon");
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            icon.classList.remove("bi-eye");
+            icon.classList.add("bi-eye-slash");
+        } else {
+            passwordInput.type = "password";
+            icon.classList.remove("bi-eye-slash");
+            icon.classList.add("bi-eye");
+        }
+    }
+</script>

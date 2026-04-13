@@ -1,0 +1,151 @@
+﻿@model IEnumerable<ĐACN.Shipper>
+
+@{
+    ViewBag.Title = "Danh sách người giao hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-truck"></i> Danh sách người giao hàng</span>
+            <div>
+                <a href="@Url.Action("ThemShipper", "Admin")" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Thêm Shipper mới
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- 🔍 Ô tìm kiếm -->
+            <form method="get" class="row mb-3 g-2 align-items-center">
+                <div class="col-auto">
+                    <input type="text" name="keyword" value="@ViewBag.Keyword" class="form-control"
+                           placeholder="Tìm theo tên hoặc SĐT..." style="width:250px;" />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+
+            <!-- 🧾 Bảng danh sách -->
+            <table class="table table-hover table-bordered text-center align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>STT</th>
+                        <th>Tên người giao hàng</th>
+                        <th>Số điện thoại</th>
+                        <th>Biển số xe</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Trạng thái</th>
+                        <th>Chi tiết</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int stt = 1;
+                        var danhSach = Model?.OrderByDescending(s => s.MaShipper).ToList() ?? new List<ĐACN.Shipper>();
+                    }
+
+                    @if (danhSach.Any())
+                    {
+                        foreach (var shipper in danhSach)
+                        {
+                            <tr>
+                                <td>@stt</td>
+                                <td class="fw-semibold">@shipper.TenShipper</td>
+                                <td>@shipper.SDT</td>
+                                <td>@shipper.BienSoXe</td>
+                                <td>@(shipper.TaiKhoan?.TenDangNhap ?? "—")</td>
+                                <td>
+                                    @if (shipper.TaiKhoan != null)
+                                    {
+                                        if (shipper.TaiKhoan.TrangThai == true)
+                                        {
+                                            <span class="badge bg-success px-3 py-2">Hoạt động</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger px-3 py-2">Bị khóa</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary px-3 py-2">Chưa có tài khoản</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("ChiTietShipper", "Admin", new { id = shipper.MaShipper })"
+                                       class="btn btn-success btn-sm px-3">
+                                        <i class="bi bi-eye"></i> Xem
+                                    </a>
+                                </td>
+                                <td>
+                                    <!-- 🔒 Khóa / 🔓 Mở -->
+                                    <form action="@Url.Action("DoiTrangThaiShipper", "Admin")" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@shipper.MaShipper" />
+                                        @if (shipper.TaiKhoan?.TrangThai == true)
+                                        {
+                                            <button type="submit" class="btn btn-warning btn-sm px-3">
+                                                <i class="bi bi-lock"></i> Khóa
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-primary btn-sm px-3">
+                                                <i class="bi bi-unlock"></i> Mở
+                                            </button>
+                                        }
+                                    </form>
+
+                                    <!-- 🗑️ Xóa -->
+                                    <form action="@Url.Action("XoaShipper", "Admin")" method="post" style="display:inline;"
+                                          onsubmit="return confirmDelete();">
+                                        <input type="hidden" name="id" value="@shipper.MaShipper" />
+                                        <button type="submit" class="btn btn-danger btn-sm px-3">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            stt++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-muted py-3">Không tìm thấy Shipper nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- ✅ Thông báo -->
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-success mt-3 text-center fw-bold">
+                    @TempData["Message"]
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger mt-3 text-center fw-bold">
+                    @TempData["Error"]
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 📦 Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+<script>
+    // ⚠️ Xác nhận khi xóa
+    function confirmDelete() {
+        return confirm("Bạn có chắc muốn xóa shipper này không?");
+    }
+</script>

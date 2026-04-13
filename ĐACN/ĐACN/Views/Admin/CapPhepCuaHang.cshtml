@@ -1,0 +1,88 @@
+﻿@model IEnumerable<ĐACN.NhaHang>
+@{
+    ViewBag.Title = "Cấp phép cửa hàng";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid mt-4">
+    <h3 class="mb-4 text-danger fw-bold">Danh sách cửa hàng chờ xác nhận</h3>
+
+    <!-- Hiển thị thông báo thành công hoặc lỗi -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover text-center align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Tên cửa hàng</th>
+                    <th>Địa chỉ</th>
+                    <th>Số điện thoại</th>
+                    <th>Xem chi tiết</th>
+                    <th>Chấp nhận</th>
+                    <th>Từ chối</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-muted">Không có cửa hàng nào chờ xác nhận</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.MaNH</td>
+                            <td>@item.TenNH</td>
+                            <td>@item.DiaChi</td>
+                            <td>@item.SDT</td>
+                            <td>
+                                <a href="@Url.Action("ChiTietNhaHang", "Admin", new { id = item.MaNH })"
+                                   class="btn btn-outline-info btn-sm" title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <form action="@Url.Action("ChapNhan", "Admin")" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@item.MaNH" />
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-success btn-sm" title="Chấp nhận">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <form action="@Url.Action("TuChoi", "Admin")" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@item.MaNH" />
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Từ chối">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Bootstrap Icons -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">

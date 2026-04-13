@@ -1,0 +1,222 @@
+﻿@model ĐACN.Models.TheoDoiDonHangFullViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Theo Dõi Đơn Hàng";
+
+    var steps = new[] { "Chờ xác nhận", "Đang lấy món", "Đang giao", "Hoàn thành" };
+    var currentStepIndex = Array.IndexOf(steps, Model.DonHang.TrangThai);
+}
+
+<h2>Theo Dõi Đơn Hàng</h2>
+
+<div class="card p-3 mb-4">
+    <h4>Thông tin giao hàng</h4>
+    <div class="mb-2"><strong>Tên người nhận:</strong> @Model.DonHang.TenKH</div>
+    <div class="mb-2"><strong>Địa chỉ:</strong> @Model.DonHang.DiaChi</div>
+    <div class="mb-2"><strong>Số điện thoại:</strong> @Model.DonHang.Sdt</div>
+</div>
+
+<div class="card p-3 mb-4">
+    <h4>Vị trí giao hàng</h4>
+    <div id="map" style="height:400px; width:100%; border-radius:10px;"></div>
+    <div class="mt-2">
+        <strong>Khoảng cách:</strong> <span id="distance">0</span> m |
+        <strong>Thời gian dự kiến:</strong> <span id="duration">0</span> s
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <h4>Trạng thái đơn hàng</h4>
+    <div class="d-flex justify-content-between align-items-center position-relative" style="height:50px;">
+        @for (int i = 0; i < steps.Length; i++)
+        {
+            var statusClass = i < currentStepIndex ? "step-complete" :
+                              i == currentStepIndex ? "step-active" : "step-upcoming";
+            <div class="step @statusClass flex-fill text-center position-relative">
+                <div class="step-circle">@((i + 1))</div>
+                <div class="step-label">@steps[i]</div>
+            </div>
+        }
+    </div>
+</div>
+
+<h3>Chi tiết đơn hàng</h3>
+<table class="table table-bordered table-striped">
+    <thead class="table-info">
+        <tr>
+            <th>Tên món</th>
+            <th>Số lượng</th>
+            <th>Đơn giá</th>
+            <th>Tổng tiền</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var ct in Model.ChiTietDonHang)
+        {
+            <tr>
+                <td>@ct.TenMon</td>
+                <td>@ct.SoLuong</td>
+                <td>@ct.DonGia.ToString("N0") đ</td>
+                <td>@ct.TongTien.ToString("N0") đ</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<style>
+    .step {
+        flex: 1;
+        text-align: center;
+    }
+
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        line-height: 40px;
+        color: white;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-complete .step-circle {
+        background-color: #28a745;
+    }
+
+    .step-active .step-circle {
+        background: linear-gradient(90deg, rgba(255,255,0,0.3) 0%, rgba(255,255,0,0.7) 50%, rgba(255,255,0,0.3) 100%);
+        background-size: 200% 100%;
+        animation: lightMove 1.5s linear infinite;
+    }
+
+    .step-upcoming .step-circle {
+        background-color: #6c757d;
+    }
+
+    .step-label {
+        margin-top: 5px;
+        font-size: 0.9rem;
+    }
+
+    @@keyframes lightMove {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        width: 100%;
+        height: 4px;
+        background-color: #dee2e6;
+        z-index: 0;
+    }
+
+    .step-complete:not(:last-child)::after {
+        background-color: #28a745;
+    }
+
+    .step-active:not(:last-child)::after {
+        background: linear-gradient(90deg, rgba(255,255,0,0.3) 0%, rgba(255,255,0,0.7) 50%, rgba(255,255,0,0.3) 100%);
+        background-size: 200% 100%;
+        animation: lightMove 1.5s linear infinite;
+    }
+
+    #map {
+        border-radius: 10px;
+    }
+</style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
+
+<script>
+let map, shipperMarker, restaurantMarker, customerMarker, routeLine;
+
+function initMap() {
+    map = L.map('map').setView([10.7769,106.7009],15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'&copy; OpenStreetMap contributors' }).addTo(map);
+
+    const restaurantIcon = L.icon({
+        iconUrl: '/images/arrows/restaurant-arrow.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+    const customerIcon = L.icon({
+        iconUrl: '/images/arrows/customer-arrow.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+    const shipperIcon = L.icon({
+        iconUrl: '/images/arrows/shipper.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20]
+    });
+
+    restaurantMarker = L.marker([0,0], {icon: restaurantIcon}).addTo(map).bindPopup("Nhà hàng");
+    customerMarker   = L.marker([0,0], {icon: customerIcon}).addTo(map).bindPopup("Khách hàng");
+    shipperMarker    = L.marker([0,0], {icon: shipperIcon, rotationAngle:0}).addTo(map).bindPopup("Shipper");
+
+    loadTrackingInfo();
+    setInterval(loadTrackingInfo,5000);
+}
+
+function loadTrackingInfo() {
+    const maDon = "@Model.DonHang.MaDon";
+    $.getJSON("/KhachHang/GetTrackingInfo?maDon=" + maDon, function(data){
+        if (!data.success) return;
+
+        const bounds = [];
+
+        if(data.restaurant){
+            restaurantMarker.setLatLng([data.restaurant.lat, data.restaurant.lng]).bindPopup(data.restaurant.name || "Nhà hàng");
+            bounds.push([data.restaurant.lat, data.restaurant.lng]);
+        }
+        if(data.customer){
+            customerMarker.setLatLng([data.customer.lat, data.customer.lng]).bindPopup(data.customer.name || "Khách hàng");
+            bounds.push([data.customer.lat, data.customer.lng]);
+        }
+        if(data.shipper){
+            const prev = shipperMarker.getLatLng();
+            const curr = [data.shipper.lat, data.shipper.lng];
+            let angle = 0;
+            if(prev.lat !== 0 && prev.lng !== 0){
+                angle = Math.atan2(curr[1]-prev.lng, curr[0]-prev.lat) * 180/Math.PI;
+            }
+            shipperMarker.setLatLng(curr).setRotationAngle(angle);
+            bounds.push(curr);
+        }
+
+        if(bounds.length > 0) map.fitBounds(bounds, { padding:[50,50] });
+
+        if(data.shipper){
+            $.getJSON("/KhachHang/GetShipperRoute?maDon=" + maDon, function(routeData){
+                if(routeLine) map.removeLayer(routeLine);
+                if(routeData.route && routeData.route.length>0){
+                    const latlngs = routeData.route.map(p=>[p.lat,p.lng]);
+                    routeLine = L.polyline(latlngs,{color:'blue', weight:4}).addTo(map);
+                    const allPoints = latlngs.concat(bounds);
+                    map.fitBounds(allPoints, { padding:[50,50] });
+                    $("#distance").text(routeData.distance);
+                    $("#duration").text(routeData.duration);
+                }
+            });
+        }
+    }).fail(function(){ console.warn("Không lấy được thông tin tracking."); });
+}
+
+document.addEventListener("DOMContentLoaded", initMap);
+</script>

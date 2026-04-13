@@ -1,0 +1,62 @@
+﻿@model IEnumerable<ĐACN.Models.LoaiMonAnViewModel>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Danh Mục";
+}
+
+<style>
+    .category-card {
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .category-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+    .category-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 12px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    @@media (max-width: 768px) {
+        .category-img {
+            width: 90px;
+            height: 90px;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4 fw-bold">🏙️ Danh Mục Món Ăn</h2>
+    <div class="row justify-content-center">
+        @if (Model == null || !Model.Any())
+        {
+            <p class="text-center text-muted mt-3">Chưa có danh mục nào để hiển thị.</p>
+        }
+        else
+        {
+            foreach (var dm in Model)
+            {
+                <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4">
+                    <a href="@Url.Action("MonAnTheoLoai", "KhachHang", new { maLoai = dm.MaLoai })" style="text-decoration:none;">
+                        <div class="category-card text-center p-3">
+                            <img src="~/images/danhmuc/@dm.HinhAnh" alt="@dm.TenLoai" class="category-img mb-2" />
+                            <h6 class="mt-2">@dm.TenLoai</h6>
+                        </div>
+                    </a>
+                </div>
+            }
+        }
+    </div>
+</div>

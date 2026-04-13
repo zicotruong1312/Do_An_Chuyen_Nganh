@@ -1,0 +1,134 @@
+﻿@using ĐACN.Models
+@{
+    Layout = null;
+
+    // Kiểm tra session user
+    var tk = Session["TaiKhoan"] as TaiKhoan;
+}
+
+@model IEnumerable<LoaiMonAnViewModel>
+
+@if (Model == null || !Model.Any())
+{
+    <p class="text-center text-muted mt-3">Chưa có danh mục nào để hiển thị.</p>
+}
+else
+{
+    <style>
+        .category-card {
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+            .category-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            }
+
+        .category-img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        @@media (max-width: 768px) {
+            .category-img {
+                width: 90px;
+                height: 90px;
+            }
+        }
+    </style>
+
+    <div class="row justify-content-center">
+        @foreach (var dm in Model)
+        {
+            <div class="col-6 col-sm-4 col-md-3 col-lg-2 mb-4">
+                <a href="@Url.Action("MonAnTheoLoai", "KhachHang", new { maLoai = dm.MaLoai })"
+                   class="category-link require-login"
+                   data-id="@dm.MaLoai"
+                   style="text-decoration:none;">
+                    <div class="category-card text-center p-3">
+                        <img src="~/images/danhmuc/@dm.HinhAnh" alt="@dm.TenLoai" class="category-img mb-2" />
+                        <h6 class="mt-2">@dm.TenLoai</h6>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Modal Đăng nhập -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Đăng nhập</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Tên đăng nhập</label>
+                            <input type="text" class="form-control" id="username" name="username" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mật khẩu</label>
+                            <input type="password" class="form-control" id="password" name="password" required />
+                        </div>
+                        <div id="loginError" class="text-danger mb-2" style="display:none;"></div>
+                        <button type="submit" class="btn btn-danger w-100">Đăng nhập</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+
+    <script>
+        $(document).ready(function () {
+            var isLoggedIn = @((tk != null).ToString().ToLower());
+
+            // Chặn link danh mục nếu chưa đăng nhập
+            $(".require-login").click(function (e) {
+                if (!isLoggedIn) {
+                    e.preventDefault();
+                    $("#loginModal").modal('show');
+                }
+            });
+
+            // Ajax xử lý form login
+            $("#loginForm").submit(function (e) {
+                e.preventDefault();
+                const username = $("#username").val();
+                const password = $("#password").val();
+
+                $.ajax({
+                    url: '@Url.Action("Login", "Account")',
+                    type: 'POST',
+                    data: { username: username, password: password },
+                    success: function (res) {
+                        if (res.success) {
+                            $("#loginModal").modal('hide');
+                            location.reload();
+                        } else {
+                            $("#loginError").text(res.message).show();
+                        }
+                    },
+                    error: function () {
+                        $("#loginError").text("Đã xảy ra lỗi khi đăng nhập.").show();
+                    }
+                });
+            });
+        });
+    </script>
+}

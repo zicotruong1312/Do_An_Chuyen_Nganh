@@ -1,0 +1,147 @@
+@model ĐACN.Shipper
+@using System
+
+@{
+    ViewBag.Title = "Thông tin cá nhân";
+    Layout = "~/Views/Shared/_LayoutShipper.cshtml";
+
+    var avatarSrc = !string.IsNullOrEmpty(Model.HinhAnh) ? Url.Content("~" + Model.HinhAnh) : null;
+    var ratingText = "Chưa có"; // Model không có DiemDanhGia
+    var displayLabel = (!string.IsNullOrWhiteSpace(Model.TenShipper) ? Model.TenShipper : Model.TaiKhoan?.TenDangNhap ?? "?").Trim();
+    var avatarInitial = displayLabel.Length > 0 ? displayLabel.Substring(0, 1).ToUpperInvariant() : "?";
+    var tongThuNhap = ViewBag.TongThuNhap != null ? (decimal)ViewBag.TongThuNhap : 0;
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">Thông tin cá nhân</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
+
+    <div class="row g-4 mb-3">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    @if (!string.IsNullOrEmpty(avatarSrc))
+                    {
+                        <img src="@avatarSrc" alt="Avatar" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover;object-position:center;display:block;margin:0 auto;" />
+                    }
+                    else
+                    {
+                        <div class="rounded-circle bg-secondary text-white d-inline-flex justify-content-center align-items-center mb-3" style="width:120px;height:120px;font-size:2.5rem;font-weight:600;">
+                            @avatarInitial
+                        </div>
+                    }
+                    <h5 class="mb-1">@(!string.IsNullOrWhiteSpace(Model.TenShipper) ? Model.TenShipper : "Chưa cập nhật")</h5>
+                    <div class="text-muted">Điểm đánh giá: @ratingText</div>
+                    <div class="text-muted">Tổng thu nhập: @String.Format("{0:N0}", tongThuNhap) đ</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            @using (Html.BeginForm("Profile", "Shipper", FormMethod.Post, new { enctype = "multipart/form-data", @class = "row g-3" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="col-md-6">
+                    <label class="form-label">Tên shipper</label>
+                    <input class="form-control" name="tenShipper" value="@Model.TenShipper" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Số điện thoại</label>
+                    <input class="form-control" name="sdt" value="@Model.SDT" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Biển số xe</label>
+                    <input class="form-control" name="bienSoXe" value="@Model.BienSoXe" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ảnh đại diện</label>
+                    <div class="mb-2">
+                        <input type="file" name="avatar" id="avatarInput" accept="image/*" class="form-control" />
+                        <div class="form-text">Chọn ảnh mới để cập nhật ảnh đại diện. Chấp nhận: JPG, PNG, GIF (tối đa 5MB).</div>
+                    </div>
+                    <div id="avatarPreview" class="mt-2" style="display:none;">
+                        <img id="previewImg" src="#" alt="Preview" class="img-thumbnail" style="max-width:200px;max-height:200px;object-fit:cover;" />
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-sm btn-danger" id="removeAvatarPreview">Hủy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12"><hr /></div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input class="form-control" name="username" value="@(Model.TaiKhoan?.TenDangNhap)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Mật khẩu</label>
+                    <input class="form-control" type="password" name="password" value="@(Model.TaiKhoan?.MatKhau)" />
+                </div>
+
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var avatarInput = $('#avatarInput');
+        var avatarPreview = $('#avatarPreview');
+        var previewImg = $('#previewImg');
+        var removeBtn = $('#removeAvatarPreview');
+
+        // Preview ảnh khi chọn file
+        avatarInput.on('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                var allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Chỉ chấp nhận file ảnh (JPG, PNG, GIF, BMP).');
+                    avatarInput.val('');
+                    return;
+                }
+
+                // Validate file size (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Kích thước file không được vượt quá 5MB.');
+                    avatarInput.val('');
+                    return;
+                }
+
+                // Hiển thị preview
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.attr('src', e.target.result);
+                    avatarPreview.show();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                avatarPreview.hide();
+            }
+        });
+
+        // Xóa preview
+        removeBtn.on('click', function() {
+            avatarInput.val('');
+            avatarPreview.hide();
+            previewImg.attr('src', '#');
+        });
+
+        // Hiển thị ảnh hiện tại nếu có
+        @if (!string.IsNullOrEmpty(avatarSrc))
+        {
+            <text>
+            previewImg.attr('src', '@avatarSrc');
+            avatarPreview.show();
+            </text>
+        }
+    });
+</script>
